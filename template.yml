@@ -68,7 +68,7 @@ Resources:
         # The Swagger/OpenAPI definition for the API
         swagger: '2.0'
         info:
-          title: !Ref 'AWS::mt700-lambda-stack'
+          title: !Ref 'AWS::tf-lambda-stack'
         paths:
           /sendemail:
             post:
