@@ -21,63 +21,16 @@ Resources:
         SendEmailApiEvent:
           Type: Api
           Properties:
-            RestApiId: !Ref MT700SendmailApiGateway
             Path: /sendemail
             Method: POST
-  MT700SendEmailFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      # Policies that grant the necessary permissions
+
       Policies:
-        # Policy for CloudWatch logs
-        - PolicyName: CloudWatchLogsPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${MT700SendEmailFunction}:*'
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Effect: Allow
+              Action: "ses:SendRawEmail"
+              Resource: "*"
 
-        # Policy for sending raw emails via SES
-        - PolicyName: SESRawEmailPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ses:SendRawEmail
-                Resource: '*'
-
-  MT700SendmailApiGateway:
-    Type: AWS::Serverless::Api
-    Properties:
-      StageName: dev
-      DefinitionBody:
-        # The Swagger/OpenAPI definition for the API
-        swagger: '2.0'
-        info:
-          title: !Ref 'AWS::StackName'
-        paths:
-          /sendemail:
-            post:
-              # Specify the Lambda function to be invoked by this path
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                uri:
-                  # Use the !Sub function to dynamically create the Lambda ARN
-                  !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MT700SendEmailFunction.Arn}/invocations'
-                passthroughBehavior: when_no_match
-                type: aws_proxy
-              responses: {}
+  SendEmailApiEndpoint:
+    Description: "API Gateway endpoint URL for the email sending service"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Dev/sendemail"
