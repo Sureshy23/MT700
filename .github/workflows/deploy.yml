@@ -18,7 +18,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
-          aws-region: eu-west-1  # Set your desired AWS region
+          aws-region: me-south-1  # Set your desired AWS region
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -34,4 +34,4 @@ jobs:
         run: sam build
 
       - name: SAM Deploy
-        run: sam deploy --stack-name my-lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset --resolve-s3
+        run: sam deploy --stack-name mt700-lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset --resolve-s3
