@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  My Python Lambda Application to send an MT700 details
+
+Globals:
+  Function:
+    Timeout: 30
+
+Resources:
+  MyPythonFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: lambdafunction.lambda_handler
+      Runtime: python3.12
+      Role: arn:aws:iam::424706283069:role/service-role/swiftMT700-role-skjrelp8
+
+      Events:
+        SendEmailApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApiGateway
+            Path: /sendemail
+            Method: POST
+
+  MyApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      DefinitionBody:
+        # The Swagger/OpenAPI definition for the API
+        swagger: '2.0'
+        info:
+          title: !Ref 'AWS::StackName'
+        paths:
+          /sendemail:
+            post:
+              # Specify the Lambda function to be invoked by this path
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                uri:
+                  # Use the !Sub function to dynamically create the Lambda ARN
+                  !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MyPythonFunction.Arn}/invocations'
+                passthroughBehavior: when_no_match
+                type: aws_proxy
+              responses: {}

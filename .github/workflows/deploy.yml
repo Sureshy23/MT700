@@ -1,0 +1,36 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Set your desired AWS region
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install SAM CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install aws-sam-cli
+
+      - name: SAM Build
+        run: sam build
+
+      - name: SAM Deploy
+        run: sam deploy --stack-name my-lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset
