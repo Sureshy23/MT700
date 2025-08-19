@@ -21,7 +21,7 @@ Resources:
         SendEmailApiEvent:
           Type: Api
           Properties:
-            RestApiId: !Ref MyApiGateway
+            RestApiId: !Ref MT700SendmailApiGateway
             Path: /sendemail
             Method: POST
   MT700SendEmailFunctionRole:
@@ -60,7 +60,7 @@ Resources:
                   - ses:SendRawEmail
                 Resource: '*'
 
-  MyApiGateway:
+  MT700SendmailApiGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
@@ -68,7 +68,7 @@ Resources:
         # The Swagger/OpenAPI definition for the API
         swagger: '2.0'
         info:
-          title: !Ref 'AWS::StackName'
+          title: !Ref 'AWS::mt700-lambda-stack'
         paths:
           /sendemail:
             post:
