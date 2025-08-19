@@ -34,4 +34,4 @@ jobs:
         run: sam build
 
       - name: SAM Deploy
-        run: sam deploy --stack-name my-lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset
+        run: sam deploy --stack-name my-lambda-stack --capabilities CAPABILITY_IAM --no-confirm-changeset --resolve-s3
