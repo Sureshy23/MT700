@@ -14,7 +14,6 @@ Resources:
       CodeUri: src/
       Handler: lambdafunction.lambda_handler
       Runtime: python3.12
-      
       Role: !GetAtt MT700SendEmailFunctionRole.Arn
 
       Events:
@@ -23,13 +22,42 @@ Resources:
           Properties:
             Path: /sendemail
             Method: POST
-
+  # --- This is the new role resource that contains all permissions ---
+  MT700SendEmailFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
       Policies:
-        - AWSLambdaBasicExecutionRole
-        - Statement:
-            - Effect: Allow
-              Action: "ses:SendRawEmail"
-              Resource: "*"
+        # Policy for CloudWatch Logs
+        - PolicyName: CloudWatchLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${MT700SendEmailFunction}:*'
+        
+        # Policy for sending emails via SES
+        - PolicyName: SESRawEmailPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendRawEmail
+                Resource: "*"
+# --- END OF ROLE RESOURCE ---
 
   SendEmailApiEndpoint:
     Description: "API Gateway endpoint URL for the email sending service"
