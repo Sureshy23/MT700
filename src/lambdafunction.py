@@ -58,7 +58,7 @@ def my_custom_layout(canvas, doc,refNo, name):
     canvas.drawString(inch*0.7, letter[1] - 0.5 * inch, "Swift Advice")
 
     # Right-aligned logo
-    logo_path = 'ASB_Logo.png'
+    logo_path = '/images/ASB_Logo.png'
     try:
         # Get the width and height of the page for positioning
         page_width = letter[0]
@@ -126,7 +126,7 @@ def my_custom_layout(canvas, doc,refNo, name):
         x_pos = x_pos+30
 
     # Right-aligned stamp image
-    stamp_path = 'ASB_Stamp.png' # Make sure this image exists
+    stamp_path = '/images/ASB_Stamp.png' # Make sure this image exists
     try:
         page_width = letter[0]
         
@@ -141,7 +141,7 @@ def my_custom_layout(canvas, doc,refNo, name):
     except Exception:
         canvas.drawString(page_width - 2 * inch, 0.7 * inch, "[Stamp Placeholder]")
 
-    footer_path = 'footer.png' # Make sure this image exists
+    footer_path = '/images/footer.png' # Make sure this image exists
     try:
         page_width = letter[0]
         canvas.drawImage(footer_path, 0, 0, width=page_width, height=0.6*inch)

@@ -25,9 +25,14 @@ jobs:
         with:
           python-version: '3.12'
 
+      # --- Step 1: Create the Lambda Layer package ---
+      - name: Install dependencies for layer
+        run: |
+          mkdir -p layer_dependencies/python/
+          pip install -r src/requirements.txt -t layer_dependencies/python/
+      
       - name: Install SAM CLI
         run: |
-          python -m pip install --upgrade pip
           pip install aws-sam-cli
 
       - name: SAM Build

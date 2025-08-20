@@ -1,19 +1,29 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  My Python Lambda Application to send an MT700 details
+  A function to generate a password protected pdf and send an MT700 details via ses
 
 Globals:
   Function:
     Timeout: 30
 
 Resources:
+  MyDependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ./layer_dependencies
+      CompatibleRuntimes:
+        - python3.12
+      RetentionPolicy: Retain
+
   SendEmailSwiftDetailsFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/
       Handler: lambdafunction.lambda_handler
       Runtime: python3.12
+      Layers:
+        - !Ref MyDependenciesLayer
 
       Events:
         ApiEvent:
