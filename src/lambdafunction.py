@@ -8,7 +8,6 @@ import io
 from reportlab.lib.colors import lightgrey,darkgray
 import html
 import datetime
-import pyperclip
 import boto3
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -270,7 +269,6 @@ def generate_pdf(events, context):
                     }
 
         file_name = events["tfNo"]+".pdf"
-        pyperclip.copy(base64_pdf)
         data ={ "messageId": ""}
         return {
             'statusCode': 200,
