@@ -16,34 +16,57 @@ from botocore.session import Session
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from pypdf import PdfWriter, PdfReader
-
+import json
 
 def lambda_handler(event,context):
     
     try:
-        events = {
+        if 'body' in event and isinstance(event['body'], str):
+            # Parse the JSON string from the 'body' key
+            print(event)
+            payload = json.loads(event['body'])
 
-                "date": event["date"],
-                "tfNo": event["tfNo"],
-                "cpr": event["cpr"],
-                "customerID":event["customerID"],
-                "email":event["email"],
-                "header": event["header"],
-                "msgColumn1": event.get("msgColumn1",None),
-                "msgColumn2": event.get("msgColumn2",None),
-                "customerName": event["customerName"],
-                "sender": event["sender"],
-                "receiver": event["receiver"]
+            events = {
+                "date": payload.get("date"),
+                "tfNo": payload.get("tfNo"),
+                "cpr": payload.get("cpr"),
+                "customerID":payload.get("customerID"),
+                "email":payload.get("email"),
+                "header": payload.get("header"),
+                "msgColumn1": payload.get("msgColumn1",None),
+                "msgColumn2": payload.get("msgColumn2",None),
+                "customerName": payload.get("customerName"),
+                "sender": payload.get("sender"),
+                "receiver": payload.get("receiver")
                
+            }
+        else:
+            # Handle cases where the body is missing or in an unexpected format
+            return {
+                "statusCode": 400,
+                "body": json.dumps({"message": "Request body missing or invalid."})
+            }
+
+        if not all([events["cpr"], events["email"],events["customerID"]]):
+            return {
+                "statusCode": 400,
+                "body": json.dumps({"message": "Inadequate details."})
             }
         
         return generate_pdf(events,context)    
+    except json.JSONDecodeError:
+        # Handle malformed JSON in the request body
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"message": "Invalid JSON in request body."})
+        }
 
     except Exception as e:
-        print(e)
+        # Log the full exception for debugging
+        print(f"An unexpected error occurred: {e}")
         return {
-            'statusCode': 500,
-            'body':  str(e)
+            "statusCode": 500,
+            "body": json.dumps({"message": "Internal Server Error."})
         }
 
 def my_custom_layout(canvas, doc,refNo, name):
@@ -57,7 +80,7 @@ def my_custom_layout(canvas, doc,refNo, name):
     canvas.drawString(inch*0.7, letter[1] - 0.5 * inch, "Swift Advice")
 
     # Right-aligned logo
-    logo_path = '/images/ASB_Logo.png'
+    logo_path = 'images/ASB_Logo.png'
     try:
         # Get the width and height of the page for positioning
         page_width = letter[0]
@@ -125,7 +148,7 @@ def my_custom_layout(canvas, doc,refNo, name):
         x_pos = x_pos+30
 
     # Right-aligned stamp image
-    stamp_path = '/images/ASB_Stamp.png' # Make sure this image exists
+    stamp_path = 'images/ASB_Stamp.png' # Make sure this image exists
     try:
         page_width = letter[0]
         
@@ -140,7 +163,7 @@ def my_custom_layout(canvas, doc,refNo, name):
     except Exception:
         canvas.drawString(page_width - 2 * inch, 0.7 * inch, "[Stamp Placeholder]")
 
-    footer_path = '/images/footer.png' # Make sure this image exists
+    footer_path = 'images/footer.png' # Make sure this image exists
     try:
         page_width = letter[0]
         canvas.drawImage(footer_path, 0, 0, width=page_width, height=0.6*inch)
@@ -256,30 +279,29 @@ def generate_pdf(events, context):
         base64_pdf = base64.b64encode(protected_pdf_buffer.getvalue()).decode('utf-8')
         pdf_filename = "SwiftAdvice_"+events["tfNo"]+".pdf"
         try:
-            response = send_email_with_attachment_base64("no-reply-dev@alsalambank.com", events["email"][0], "MT700 SWIFT DETAILS", base64_pdf,pdf_filename)
+
+            response = send_email_with_attachment_base64("no-reply-dev@alsalambank.com", events["email"], "MT700 SWIFT DETAILS", protected_pdf_buffer.getvalue(),pdf_filename)
+            
             if response["statusCode"] == 200:
                 return  {
                     'statusCode': 200,
-                    'body':  response["body"]
+                    'body':  json.dumps({"message": response["body"]})
+                    }
+            else:
+                return  {
+                    "statusCode": 500,
+                    "body": json.dumps({"message":response["body"]})
                     }
         except Exception as e:
-            return  {
-                    'statusCode': 500,
-                    'body': str(e)
-                    }
-
-        file_name = events["tfNo"]+".pdf"
-        data ={ "messageId": ""}
-        return {
-            'statusCode': 200,
-            'body':data     
-        }
+            return {
+            "statusCode": 500,
+            "body": json.dumps({"message": "Internal Server Error."})
+            }
 
     except Exception as e:
-        print(str(e))
         return {
-            'statusCode': 500,
-            'body':str(e)
+            "statusCode": 500,
+            "body": json.dumps({"message": "Internal Server Error."})
         }
 
 def send_email_with_attachment_base64(sender, recipient, subject, base64_string,fileName):
@@ -290,7 +312,7 @@ def send_email_with_attachment_base64(sender, recipient, subject, base64_string,
         msg['From'] = sender
         msg['To'] = recipient
 
-        with open("emailbody.html", "r", encoding="utf-8") as file:
+        with open("emailBody.html", "r", encoding="utf-8") as file:
             html_content = file.read()
 
         html_content = html_content.replace("{{subject}}", subject)
@@ -309,6 +331,7 @@ def send_email_with_attachment_base64(sender, recipient, subject, base64_string,
                 RawMessage={'Data': msg.as_string()}
                 
         )
+        print(response['MessageId'])
         return {
             'statusCode': 200,
             'body': f"Email sent! Message ID: {response['MessageId']}"
